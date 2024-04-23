@@ -162,14 +162,61 @@ fig.colorbar(sm, cax=cbar_ax)
 
 plt.tight_layout(rect=[0, 0, 0.9, 1])
 plt.show()
+
+#%%PRODES
+# Caminhos definidos para shapefiles e CSV
+# Caminho para o seu shapefile (substitua 'caminho/para/seu/shapefile' pelo caminho correto)
+shapefile_path = r'C:\Users\luiz.felipe\Desktop\IPAM\hex_comparativo\shp\hex_amazon.shp'
+# Caminhos para os arquivos CSV
+prodes_hex_2023_path = r'C:\Users\luiz.felipe\Desktop\FLP\MapiaEng\GitHub\geoscience_ipam\mapbiomas_fire\nt_11\data\areas_prodes_pri_2023_hex.csv'
+
+# Carregar e agrupar os dados
+df_hex_2023 = pd.read_csv(prodes_hex_2023_path)
+
+df_hex_2023 = df_hex_2023.groupby('FID')['area'].sum().reset_index()
+
+# Renomear as colunas de área para indicar o ano
+df_hex_2023.rename(columns={'area': 'area_km2_2023'}, inplace=True)
+
+# Carregar o shapefile como um GeoDataFrame
+gdf = gpd.read_file(shapefile_path)
+
+# Combinar o GeoDataFrame com o DataFrame merged_df baseado em 'COD_MUN_NU'
+combined_gdf = gdf.merge(df_hex_2023, on='FID', how='left')
+
+# Substituir NaN por 0 nas colunas 'area_2023' e 'area_2022'
+combined_gdf['area_km2_2023'].fillna(0, inplace=True)
+
+# Exibir o mapa
+# Definir o tamanho da figura para plotagem
+plt.figure(figsize=(10, 10))
+
+# Primeira plotagem: Preencher as feições com cores baseadas em 'area_dif'
+base = combined_gdf.plot(column='area_km2_2023', cmap='PuOr', legend=True,
+                         legend_kwds={'label': "PRODES 2023 (Cenas Prioritárias)",
+                                      'orientation': "horizontal"})
+
+# Segunda plotagem: Adicionar contornos (bordas) às feições
+combined_gdf.boundary.plot(ax=base, edgecolor='black', linewidth=0.5)
+
+# Opcional: Configurar título e remover os eixos para uma visualização mais limpa
+plt.title('PRODES 2023 (Cenas Prioritárias)')
+plt.axis('off')
+
+# Mostrar o mapa
+plt.show()
+
+#%% Join tables
+
 #%%Exportar
 # Definir o caminho de destino para o shapefile exportado
-output_path = r'C:\Users\luiz.felipe\Desktop\FLP\MapiaEng\GitHub\geoscience_ipam\mapbiomas_fire\nt_11\shp\areas_col2_hex_by_year_amaz_1985_2022.shp'
+output_path = r'C:\Users\luiz.felipe\Desktop\FLP\MapiaEng\GitHub\geoscience_ipam\mapbiomas_fire\nt_11\shp\areas_prodes_hex_2023.shp'
 
-combined_col2_gdf.fillna(0, inplace=True)
+combined_gdf.fillna(0, inplace=True)
 
 # Exportar o combined_gdf como um shapefile
-combined_col2_gdf.to_file(output_path)
+combined_gdf.to_file(output_path)
 
 print("Exportado")
 # %%
+
